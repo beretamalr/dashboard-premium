@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* Esta variante le dice a Tailwind v4 que active los estilos dark:... cuando el HTML tenga la clase .dark */
+@variant dark (&:where(.dark, .dark *));
+
+/* Si tienes estilos personalizados abajo, puedes dejarlos aquí sin problemas */
+@layer base {
+  html, body {
+    @apply min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors;
+    margin: 0;
+    padding: 0;
+  }
+}
