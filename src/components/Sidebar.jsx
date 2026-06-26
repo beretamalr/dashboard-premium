@@ -1,129 +1,114 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth } from '../firebase/firebaseConfig';
-import { 
-  LayoutDashboard, 
-  Users, 
-  ShoppingBag, 
-  Settings, 
-  LogOut, 
-  Sun, 
-  Moon 
-} from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { signOut } from 'firebase/auth'
+import {
+  Boxes,
+  LayoutDashboard,
+  LogOut,
+  Moon,
+  ShoppingBag,
+  Sun,
+} from 'lucide-react'
+
+import { auth } from '../firebase/firebaseConfig'
 
 export default function Sidebar({ darkMode, setDarkMode }) {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const location = useLocation()
+  const navigate = useNavigate()
 
-  const handleCerrarSesion = async () => {
-    try {
-      await signOut(auth);
-      localStorage.removeItem('empresaId');
-      navigate('/');
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-    }
-  };
-
-  // Listado de rutas del menú lateral
   const menuItems = [
-    { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard },
-    { path: '/usuarios', name: 'Gestión de Usuarios', icon: Users },
-    { path: '/ventas', name: 'Historial de Ventas', icon: ShoppingBag },
-    { path: '/configuracion', name: 'Configuración', icon: Settings },
-  ];
+    {
+      path: '/dashboard',
+      name: 'Resumen',
+      icon: LayoutDashboard,
+    },
+    {
+      path: '/ventas',
+      name: 'Ventas',
+      icon: ShoppingBag,
+    },
+    {
+      path: '/inventario',
+      name: 'Inventario',
+      icon: Boxes,
+    },
+  ]
+
+  const cerrarSesion = async () => {
+    try {
+      await signOut(auth)
+
+      localStorage.removeItem('empresaId')
+      localStorage.removeItem('rol')
+
+      navigate('/')
+    } catch (error) {
+      console.error('No se pudo cerrar sesión:', error)
+    }
+  }
 
   return (
-    <aside className={`w-64 h-full border-r flex flex-col justify-between p-6 transition-colors duration-200 ${
-      darkMode 
-        ? 'bg-[#0f1524] border-slate-800/60 text-slate-300' 
-        : 'bg-white border-slate-200 text-slate-600'
-    }`}>
-      
-      {/* Sección Superior: Logotipo o Nombre del SaaS */}
-      <div className="space-y-8">
-        <div className="flex items-center gap-3 px-2">
-          <div className="bg-indigo-600 text-white p-2 rounded-lg font-bold text-lg shadow-sm tracking-wider">
+    <aside className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-[#0d1321] lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:w-72 lg:border-b-0 lg:border-r">
+      <div className="flex h-full flex-col px-4 py-4 lg:p-6">
+        <Link
+          to="/dashboard"
+          className="mb-5 flex shrink-0 items-center gap-3 lg:mb-8"
+        >
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-600 text-sm font-black text-white shadow-lg shadow-indigo-600/20">
             NX
           </div>
-          <div>
-            <h2 className={`font-bold text-lg tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-              Nexus Panel
-            </h2>
-            <p className="text-[11px] text-slate-400 font-medium tracking-wide uppercase">Control Central</p>
-          </div>
-        </div>
 
-        {/* Menú de Navegación */}
-        <nav className="space-y-1.5">
+          <div>
+            <p className="font-bold text-slate-900 dark:text-white">
+              Nexus Panel
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Control comercial
+            </p>
+          </div>
+        </Link>
+
+        <nav className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-2 lg:overflow-visible">
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const Icon = item.icon;
+            const Icon = item.icon
+            const activo = location.pathname === item.path
 
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-150 ${
-                  isActive
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/10'
-                    : darkMode
-                      ? 'hover:bg-slate-800/50 hover:text-white text-slate-400'
-                      : 'hover:bg-slate-50 hover:text-slate-900 text-slate-500'
+                className={`flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                  activo
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
                 }`}
               >
-                <Icon size={18} className={isActive ? 'text-white' : 'text-current'} />
+                <Icon size={18} />
                 {item.name}
               </Link>
-            );
+            )
           })}
         </nav>
-      </div>
 
-      {/* Sección Inferior: Configuración de Tema y Cerrar Sesión */}
-      <div className={`space-y-4 pt-4 border-t ${darkMode ? 'border-slate-800/60' : 'border-slate-100'}`}>
-        
-        {/* Switch de Modo Oscuro Controlado Fielmente */}
-        <div className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${
-          darkMode ? 'bg-[#0a0f1d]/40 border-slate-800/60' : 'bg-slate-50 border-slate-200'
-        }`}>
-          <div className="flex items-center gap-2">
-            {darkMode ? (
-              <Moon size={16} className="text-indigo-400" />
-            ) : (
-              <Sun size={16} className="text-amber-500" />
-            )}
-            <span className="text-xs font-semibold select-none">
-              {darkMode ? 'Modo Oscuro' : 'Modo Claro'}
-            </span>
-          </div>
+        <div className="mt-4 flex items-center gap-2 border-t border-slate-200 pt-4 dark:border-slate-800 lg:mt-auto lg:block lg:space-y-2">
+          <button
+            type="button"
+            onClick={() => setDarkMode(!darkMode)}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 lg:w-full"
+          >
+            {darkMode ? <Sun size={17} /> : <Moon size={17} />}
+            {darkMode ? 'Modo claro' : 'Modo oscuro'}
+          </button>
 
-          {/* Input Toggle Corregido */}
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
-              checked={darkMode} // Vinculado directamente al estado verdadero
-              onChange={() => setDarkMode(!darkMode)} // Invierte el estado global correctamente
-              className="sr-only peer" 
-            />
-            <div className="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-          </label>
+          <button
+            type="button"
+            onClick={cerrarSesion}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30 lg:w-full"
+          >
+            <LogOut size={17} />
+            Salir
+          </button>
         </div>
-
-        {/* Botón de Cerrar Sesión */}
-        <button
-          onClick={handleCerrarSesion}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
-            darkMode 
-              ? 'text-rose-400 hover:bg-rose-500/10' 
-              : 'text-rose-600 hover:bg-rose-50'
-          }`}
-        >
-          <LogOut size={18} />
-          Cerrar Sesión
-        </button>
       </div>
-
     </aside>
-  );
+  )
 }

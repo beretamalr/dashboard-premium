@@ -1,96 +1,80 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase/firebaseConfig';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { onAuthStateChanged } from 'firebase/auth'
 
-// Páginas y componentes
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Usuarios from './pages/Usuarios';
-import Ventas from './pages/Ventas';
-import Configuracion from './pages/Configuracion';
-import Sidebar from './components/Sidebar';
+import { auth } from './firebase/firebaseConfig'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+import Ventas from './pages/Ventas'
+import Inventario from './pages/Inventario'
+import Sidebar from './components/Sidebar'
 
-const RutaProtegida = ({ children, darkMode, setDarkMode }) => {
-  const [usuarioActivo, setUsuarioActivo] = useState(null);
-  const [cargando, setCargando] = useState(true);
+function RutaProtegida({ children, darkMode, setDarkMode }) {
+  const [usuarioActivo, setUsuarioActivo] = useState(null)
+  const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUsuarioActivo(user);
-      setCargando(false);
-    });
-    return () => unsubscribe();
-  }, []);
+    const cancelar = onAuthStateChanged(auth, (usuario) => {
+      setUsuarioActivo(usuario)
+      setCargando(false)
+    })
+
+    return cancelar
+  }, [])
 
   if (cargando) {
     return (
-      <div className={`min-h-screen flex items-center justify-center font-medium ${darkMode ? 'bg-[#070a13] text-white' : 'bg-slate-50 text-slate-900'}`}>
-        Cargando sistema...
+      <div className="grid min-h-screen place-items-center bg-slate-950 text-slate-200">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+          <p className="font-medium">Cargando sistema...</p>
+        </div>
       </div>
-    );
+    )
   }
-  
-  if (!usuarioActivo) return <Navigate to="/" />;
 
-  // CORRECCIÓN AQUÍ: Clases dinámicas según si darkMode es true o false
+  if (!usuarioActivo) {
+    return <Navigate to="/" replace />
+  }
+
   return (
-    <div className={`flex h-screen w-full overflow-hidden transition-colors duration-200 ${
-      darkMode ? 'bg-[#070a13] text-slate-100' : 'bg-slate-50 text-slate-800'
-    }`}>
-      {/* Pasamos el estado al Sidebar para que controle el switch */}
-      <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} />
-      
-      <main className="flex-1 h-full overflow-y-auto p-8">
-        {children}
-      </main>
+    <div className={darkMode ? 'dark' : ''}>
+      <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
+        <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} />
+
+        <main className="min-h-screen p-4 sm:p-6 lg:ml-72 lg:p-8">
+          {children}
+        </main>
+      </div>
     </div>
-  );
-};
+  )
+}
 
 export default function App() {
-  // Inicializamos leyendo el almacenamiento del navegador o por defecto oscuro
   const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem("theme");
-    return saved ? saved === "dark" : true;
-  });
+    const temaGuardado = localStorage.getItem('theme')
+    return temaGuardado ? temaGuardado === 'dark' : true
+  })
 
-  // Guardamos la preferencia cada vez que cambie
   useEffect(() => {
-    localStorage.setItem("theme", darkMode ? "dark" : "light");
-  }, [darkMode]);
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light')
+  }, [darkMode])
+
+  const protegerRuta = (pagina) => (
+    <RutaProtegida darkMode={darkMode} setDarkMode={setDarkMode}>
+      {pagina}
+    </RutaProtegida>
+  )
 
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
-
-        <Route path="/dashboard" element={
-          <RutaProtegida darkMode={darkMode} setDarkMode={setDarkMode}>
-            <Dashboard darkMode={darkMode} />
-          </RutaProtegida>
-        } />
-        
-        <Route path="/usuarios" element={
-          <RutaProtegida darkMode={darkMode} setDarkMode={setDarkMode}>
-            <Usuarios darkMode={darkMode} />
-          </RutaProtegida>
-        } />
-
-        <Route path="/ventas" element={
-          <RutaProtegida darkMode={darkMode} setDarkMode={setDarkMode}>
-            <Ventas darkMode={darkMode} />
-          </RutaProtegida>
-        } />
-
-        <Route path="/configuracion" element={
-          <RutaProtegida darkMode={darkMode} setDarkMode={setDarkMode}>
-            <Configuracion darkMode={darkMode} />
-          </RutaProtegida>
-        } />
-
-        <Route path="*" element={<Navigate to="/dashboard" />} />
+        <Route path="/dashboard" element={protegerRuta(<Dashboard />)} />
+        <Route path="/ventas" element={protegerRuta(<Ventas />)} />
+        <Route path="/inventario" element={protegerRuta(<Inventario />)} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
-  );
+  )
 }
