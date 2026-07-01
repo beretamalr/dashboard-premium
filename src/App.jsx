@@ -17,6 +17,7 @@ import Login from './pages/Login'
 import Registro from './pages/Registro'
 import Ventas from './pages/Ventas'
 
+
 function RutaProtegida({ children, darkMode, setDarkMode }) {
   const [cargando, setCargando] = useState(true)
   const [permitido, setPermitido] = useState(false)
