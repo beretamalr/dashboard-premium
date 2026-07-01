@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 
 import { auth, db } from '../firebase/firebaseConfig'
+import { tieneCodigoSeguridad, verificarCodigoSeguridad } from '../services/securityCode'
 
 const formatoCLP = new Intl.NumberFormat('es-CL', {
   style: 'currency',
@@ -46,6 +47,7 @@ function formularioInicial() {
     precioVenta: '',
     stockActual: '0',
     stockMinimo: '1',
+    codigoSeguridad: '',
   }
 }
 
@@ -179,6 +181,7 @@ export default function Inventario() {
       precioVenta: String(numeroSeguro(producto.precioVenta)),
       stockActual: String(numeroSeguro(producto.stockActual)),
       stockMinimo: String(numeroSeguro(producto.stockMinimo)),
+      codigoSeguridad: '',
     })
 
     setModalAbierto(true)
@@ -195,6 +198,20 @@ export default function Inventario() {
   const guardarProducto = async (event) => {
     event.preventDefault()
     setMensaje('')
+
+    if (!tieneCodigoSeguridad()) {
+      setMensaje('Primero configura un código de seguridad en Ajustes.')
+      return
+    }
+
+    const codigoValido = await verificarCodigoSeguridad(
+      formulario.codigoSeguridad,
+    )
+
+    if (!codigoValido) {
+      setMensaje('Debes ingresar un código de seguridad válido.')
+      return
+    }
 
     const costo = Number(formulario.costo)
     const precioVenta = Number(formulario.precioVenta)
@@ -755,6 +772,27 @@ export default function Inventario() {
                       stockMinimo: event.target.value,
                     })
                   }
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                />
+              </label>
+
+              <label className="block sm:col-span-2">
+                <span className="mb-1.5 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Código de seguridad
+                </span>
+
+                <input
+                  required
+                  type="password"
+                  value={formulario.codigoSeguridad}
+                  onChange={(event) =>
+                    setFormulario({
+                      ...formulario,
+                      codigoSeguridad: event.target.value,
+                    })
+                  }
+                  placeholder="Ingresa el PIN configurado en Ajustes"
+                  autoComplete="one-time-code"
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                 />
               </label>

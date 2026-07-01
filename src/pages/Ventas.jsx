@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 
 import { auth, db } from '../firebase/firebaseConfig'
+import { tieneCodigoSeguridad, verificarCodigoSeguridad } from '../services/securityCode'
 
 const formatoCLP = new Intl.NumberFormat('es-CL', {
   style: 'currency',
@@ -45,6 +46,7 @@ function formularioInicial() {
     monto: '',
     fecha: fechaHoy(),
     estado: 'Completada',
+    codigoSeguridad: '',
   }
 }
 
@@ -158,7 +160,7 @@ export default function Ventas() {
     )
 
     return {
-      monto: validas.reduce((acumulado, venta) => acumulado + venta.monto, 0),
+      monto: validas.reduce((acumulado, venta) => acumulado + (Number(venta.monto) || 0), 0),
       operaciones: validas.length,
       anuladas: ventasFiltradas.filter((venta) => venta.estado === 'Anulada')
         .length,
@@ -204,6 +206,7 @@ export default function Ventas() {
       monto: String(venta.monto || ''),
       fecha: venta.fecha || fechaHoy(),
       estado: normalizarEstado(venta.estado),
+      codigoSeguridad: '',
     })
 
     setModalAbierto(true)
@@ -237,6 +240,20 @@ export default function Ventas() {
   const guardarVenta = async (event) => {
     event.preventDefault()
     setMensaje('')
+
+    if (!tieneCodigoSeguridad()) {
+      setMensaje('Primero configura un código de seguridad en Ajustes.')
+      return
+    }
+
+    const codigoValido = await verificarCodigoSeguridad(
+      formulario.codigoSeguridad,
+    )
+
+    if (!codigoValido) {
+      setMensaje('Debes ingresar un código de seguridad válido.')
+      return
+    }
 
     const monto = Number(formulario.monto)
 
@@ -411,76 +428,133 @@ export default function Ventas() {
             </div>
           </div>
         ) : (
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[800px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-900/50 dark:text-slate-400">
-                <tr>
-                  <th className="px-5 py-4">Operación</th>
-                  <th className="px-5 py-4">Producto</th>
-                  <th className="px-5 py-4">Categoría</th>
-                  <th className="px-5 py-4">Fecha</th>
-                  <th className="px-5 py-4">Estado</th>
-                  <th className="px-5 py-4 text-right">Monto</th>
-                  <th className="px-5 py-4 text-right">Acciones</th>
-                </tr>
-              </thead>
+          <>
+            <div className="space-y-3 p-4 md:hidden">
+              {ventasFiltradas.map((venta) => (
+                <article
+                  key={venta.id}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-xs text-slate-500 dark:text-slate-400">
+                        {venta.idTicket || venta.id.slice(0, 8)}
+                      </p>
+                      <h3 className="mt-1 text-base font-semibold text-slate-950 dark:text-white">
+                        {venta.producto}
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        {venta.categoria} · {venta.fecha}
+                      </p>
+                    </div>
 
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {ventasFiltradas.map((venta) => (
-                  <tr key={venta.id}>
-                    <td className="px-5 py-4 font-mono text-xs text-slate-500">
-                      {venta.idTicket || venta.id.slice(0, 8)}
-                    </td>
-                    <td className="px-5 py-4 font-medium dark:text-white">
-                      {venta.producto}
-                    </td>
-                    <td className="px-5 py-4 text-slate-500 dark:text-slate-400">
-                      {venta.categoria}
-                    </td>
-                    <td className="px-5 py-4 text-slate-500 dark:text-slate-400">
-                      {venta.fecha}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${estiloEstado(
-                          venta.estado,
-                        )}`}
-                      >
-                        {venta.estado}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${estiloEstado(
+                        venta.estado,
+                      )}`}
+                    >
+                      {venta.estado}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3 dark:border-slate-800">
+                    <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
                       {formatoCLP.format(venta.monto)}
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex justify-end gap-1">
-                        <button
-                          type="button"
-                          onClick={() => abrirEditar(venta)}
-                          className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400"
-                        >
-                          <Pencil size={17} />
-                        </button>
+                    </p>
 
-                        <button
-                          type="button"
-                          onClick={() => eliminarVenta(venta)}
-                          className="rounded-lg p-2 text-rose-600 hover:bg-rose-50 dark:text-rose-400"
-                        >
-                          <Trash2 size={17} />
-                        </button>
-                      </div>
-                    </td>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => abrirEditar(venta)}
+                        className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                      >
+                        <Pencil size={17} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => eliminarVenta(venta)}
+                        className="rounded-lg p-2 text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                      >
+                        <Trash2 size={17} />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-200 text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-900/50 dark:text-slate-400">
+                  <tr>
+                    <th className="px-5 py-4">Operación</th>
+                    <th className="px-5 py-4">Producto</th>
+                    <th className="px-5 py-4">Categoría</th>
+                    <th className="px-5 py-4">Fecha</th>
+                    <th className="px-5 py-4">Estado</th>
+                    <th className="px-5 py-4 text-right">Monto</th>
+                    <th className="px-5 py-4 text-right">Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {ventasFiltradas.map((venta) => (
+                    <tr key={venta.id}>
+                      <td className="px-5 py-4 font-mono text-xs text-slate-500">
+                        {venta.idTicket || venta.id.slice(0, 8)}
+                      </td>
+                      <td className="px-5 py-4 font-medium dark:text-white">
+                        {venta.producto}
+                      </td>
+                      <td className="px-5 py-4 text-slate-500 dark:text-slate-400">
+                        {venta.categoria}
+                      </td>
+                      <td className="px-5 py-4 text-slate-500 dark:text-slate-400">
+                        {venta.fecha}
+                      </td>
+                      <td className="px-5 py-4">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${estiloEstado(
+                            venta.estado,
+                          )}`}
+                        >
+                          {venta.estado}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                        {formatoCLP.format(venta.monto)}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => abrirEditar(venta)}
+                            className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400"
+                          >
+                            <Pencil size={17} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => eliminarVenta(venta)}
+                            className="rounded-lg p-2 text-rose-600 hover:bg-rose-50 dark:text-rose-400"
+                          >
+                            <Trash2 size={17} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
       {modalAbierto && (
-        <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-60 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm">
           <form
             onSubmit={guardarVenta}
             className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl dark:bg-[#111827] sm:p-6"
@@ -609,6 +683,27 @@ export default function Ventas() {
                   />
                 </label>
               </div>
+
+              <label className="block">
+                <span className="mb-1.5 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Código de seguridad
+                </span>
+
+                <input
+                  required
+                  type="password"
+                  value={formulario.codigoSeguridad}
+                  onChange={(event) =>
+                    setFormulario({
+                      ...formulario,
+                      codigoSeguridad: event.target.value,
+                    })
+                  }
+                  placeholder="Ingresa el PIN configurado en Ajustes"
+                  autoComplete="one-time-code"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                />
+              </label>
             </div>
 
             <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
