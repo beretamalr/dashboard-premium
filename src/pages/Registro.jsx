@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
+  createUserWithEmailAndPassword,
   getRedirectResult,
   GoogleAuthProvider,
-  signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
   signOut,
+  updateProfile,
 } from 'firebase/auth'
-import { ArrowRight, LockKeyhole, Mail } from 'lucide-react'
+import { ArrowRight, LockKeyhole, Mail, User } from 'lucide-react'
 
 import { auth } from '../firebase/firebaseConfig'
 import {
@@ -60,7 +61,8 @@ function IconoGoogle() {
   )
 }
 
-export default function Login() {
+export default function Registro() {
+  const [nombre, setNombre] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -109,25 +111,31 @@ export default function Login() {
     }
   }, [])
 
-  const iniciarConCorreo = async (event) => {
+  const registrarConCorreo = async (event) => {
     event.preventDefault()
     setError('')
 
     const correo = email.trim().toLowerCase()
+    const nombreLimpio = nombre.trim()
 
     if (!esCorreoAutorizado(correo)) {
       setError('Este correo no está autorizado para acceder al panel.')
       return
     }
 
+    if (!nombreLimpio) {
+      setError('Ingresa tu nombre para crear la cuenta.')
+      return
+    }
+
     try {
       setLoading(true)
 
-      const credenciales = await signInWithEmailAndPassword(
-        auth,
-        correo,
-        password,
-      )
+      const credenciales = await createUserWithEmailAndPassword(auth, correo, password)
+
+      await updateProfile(credenciales.user, {
+        displayName: nombreLimpio,
+      })
 
       await terminarAcceso(credenciales.user)
     } catch (errorLogin) {
@@ -138,7 +146,7 @@ export default function Login() {
     }
   }
 
-  const iniciarConGoogle = async () => {
+  const crearConGoogle = async () => {
     setError('')
     setLoading(true)
 
@@ -188,11 +196,11 @@ export default function Login() {
           </p>
 
           <h1 className="text-2xl font-bold text-white">
-            Accede al panel
+            Crea tu cuenta
           </h1>
 
           <p className="mt-2 text-sm text-slate-400">
-            Inventario y ventas compartidos de la PyME.
+            Solo usuarios autorizados pueden acceder al panel.
           </p>
         </div>
 
@@ -202,7 +210,24 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={iniciarConCorreo} className="space-y-4">
+        <form onSubmit={registrarConCorreo} className="space-y-4">
+          <label className="block">
+            <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-slate-300">
+              <User size={16} />
+              Nombre
+            </span>
+
+            <input
+              type="text"
+              autoComplete="name"
+              value={nombre}
+              onChange={(event) => setNombre(event.target.value)}
+              required
+              placeholder="Tu nombre"
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-white outline-none placeholder:text-slate-600 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </label>
+
           <label className="block">
             <span className="mb-1.5 flex items-center gap-2 text-sm font-medium text-slate-300">
               <Mail size={16} />
@@ -242,7 +267,7 @@ export default function Login() {
             disabled={bloqueado}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? 'Ingresando...' : 'Iniciar sesión'}
+            {loading ? 'Creando cuenta...' : 'Crear cuenta'}
             {!loading && <ArrowRight size={18} />}
           </button>
         </form>
@@ -255,25 +280,23 @@ export default function Login() {
 
         <button
           type="button"
-          onClick={iniciarConGoogle}
+          onClick={crearConGoogle}
           disabled={bloqueado}
           className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-700 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <IconoGoogle />
-          {loading ? 'Procesando acceso...' : 'Continuar con Google'}
+          {loading ? 'Procesando alta...' : 'Continuar con Google'}
         </button>
 
-        <div className="mt-6 text-center text-sm text-slate-400">
-          <p>¿Aún no tienes una cuenta?</p>
-
-          <button
-            type="button"
-            onClick={() => navigate('/registro')}
-            className="mt-2 rounded-lg px-3 py-2 font-semibold text-indigo-400 transition hover:bg-indigo-500/10 hover:text-indigo-300"
+        <p className="mt-6 text-center text-sm text-slate-400">
+          ¿Ya tienes una cuenta?{' '}
+          <Link
+            to="/"
+            className="font-semibold text-indigo-400 hover:text-indigo-300"
           >
-            Crear cuenta
-          </button>
-        </div>
+            Inicia sesión
+          </Link>
+        </p>
       </section>
     </main>
   )

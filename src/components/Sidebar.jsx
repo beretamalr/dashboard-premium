@@ -1,3 +1,4 @@
+
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import {
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react'
 
 import { auth } from '../firebase/firebaseConfig'
+import { limpiarSesionLocal } from '../services/authService'
 
 export default function Sidebar({ darkMode, setDarkMode }) {
   const location = useLocation()
@@ -34,42 +36,33 @@ export default function Sidebar({ darkMode, setDarkMode }) {
   ]
 
   const cerrarSesion = async () => {
-    try {
-      await signOut(auth)
-
-      localStorage.removeItem('empresaId')
-      localStorage.removeItem('rol')
-
-      navigate('/')
-    } catch (error) {
-      console.error('No se pudo cerrar sesión:', error)
-    }
+    limpiarSesionLocal()
+    await signOut(auth)
+    navigate('/', { replace: true })
   }
 
   return (
     <aside className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-[#0d1321] lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:w-72 lg:border-b-0 lg:border-r">
       <div className="flex h-full flex-col px-4 py-4 lg:p-6">
-        <Link
-          to="/dashboard"
-          className="mb-5 flex shrink-0 items-center gap-3 lg:mb-8"
-        >
+        <Link to="/dashboard" className="mb-5 flex items-center gap-3 lg:mb-8">
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-600 text-sm font-black text-white shadow-lg shadow-indigo-600/20">
-            NX
+            BK
           </div>
 
           <div>
             <p className="font-bold text-slate-900 dark:text-white">
-              B&K Fusion Tech
+              B&K Fusión Tech
             </p>
+
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Panel Administración
+              PyME compartida
             </p>
           </div>
         </Link>
 
         <nav className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-2 lg:overflow-visible">
           {menuItems.map((item) => {
-            const Icon = item.icon
+            const Icono = item.icon
             const activo = location.pathname === item.path
 
             return (
@@ -82,7 +75,7 @@ export default function Sidebar({ darkMode, setDarkMode }) {
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
                 }`}
               >
-                <Icon size={18} />
+                <Icono size={18} />
                 {item.name}
               </Link>
             )
