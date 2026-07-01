@@ -59,10 +59,10 @@ export default function Sidebar({ darkMode, setDarkMode }) {
 
           <div>
             <p className="font-bold text-slate-900 dark:text-white">
-              Nexus Panel
+              B&K Fusion Tech
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Control comercial
+              Panel Administración
             </p>
           </div>
         </Link>

@@ -48,7 +48,8 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950">
       <div className="bg-slate-900 p-8 rounded-xl shadow-lg w-full max-w-md border border-slate-800">
-        <h2 className="text-3xl font-bold text-white text-center mb-6">Nexus Panel</h2>
+        <img src="src\img\Logo.png" alt="Logo" className="mx-auto mb-6" />
+        <h2 className="text-2xl font-bold text-center text-white mb-6">Panel administración</h2>
         
         {error && <p className="bg-rose-500/20 text-rose-400 p-3 rounded mb-4 text-sm">{error}</p>}
         
