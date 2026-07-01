@@ -12,7 +12,7 @@ import {
 
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
-import Inventario from './pages/Inventario'
+import Inventario from "./pages/Inventario";
 import Login from './pages/Login'
 import Registro from './pages/Registro'
 import Ventas from './pages/Ventas'
