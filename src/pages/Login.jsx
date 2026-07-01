@@ -59,7 +59,12 @@ function IconoGoogle() {
     </svg>
   )
 }
-
+function esDispositivoMovil() {
+  return (
+    window.matchMedia('(max-width: 767px)').matches ||
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+  )
+}
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -108,7 +113,6 @@ export default function Login() {
       activo = false
     }
   }, [])
-
   const iniciarConCorreo = async (event) => {
     event.preventDefault()
     setError('')
@@ -149,7 +153,7 @@ export default function Login() {
         prompt: 'select_account',
       })
 
-      if (window.matchMedia('(max-width: 767px)').matches) {
+      if (esDispositivoMovil()) {
         await signInWithRedirect(auth, proveedor)
         return
       }
@@ -168,7 +172,6 @@ export default function Login() {
       setLoading(false)
     }
   }
-
   const bloqueado = loading || revisandoRedireccion
 
   return (
